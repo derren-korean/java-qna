@@ -1,27 +1,18 @@
 package codesquad.domain;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.ForeignKey;
-import javax.persistence.JoinColumn;
-import javax.persistence.Lob;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.OrderBy;
-import javax.validation.constraints.Size;
-
-import org.hibernate.annotations.Where;
-
+import codesquad.UnAuthorizedException;
 import codesquad.dto.QuestionDto;
+import org.hibernate.annotations.Where;
 import support.domain.AbstractEntity;
 import support.domain.UrlGeneratable;
 
+import javax.persistence.*;
+import javax.validation.constraints.Size;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
-public class Question extends AbstractEntity implements UrlGeneratable {
+public class  Question extends AbstractEntity implements UrlGeneratable {
     @Size(min = 3, max = 100)
     @Column(length = 100, nullable = false)
     private String title;
@@ -76,6 +67,20 @@ public class Question extends AbstractEntity implements UrlGeneratable {
 
     public boolean isDeleted() {
         return deleted;
+    }
+
+    public void update(User loginUser, Question updatedQuestion) {
+        if (!isOwner(loginUser)) {
+            throw new UnAuthorizedException("자신이 작성한 질문에 대해서만 수정/삭제가 가능합니다.");
+        }
+
+        this.title = updatedQuestion.title;
+        this.contents = updatedQuestion.contents;
+        this.deleted = updatedQuestion.deleted;
+    }
+
+    public void delete() {
+        deleted = true;
     }
 
     @Override
