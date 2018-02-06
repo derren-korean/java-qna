@@ -22,18 +22,7 @@ public class QnAController {
     @Resource(name = "qnaService")
     private QnAService qnAService;
 
-    @GetMapping("/{id}")
-    public String show(@PathVariable long id, Model model) {
-        model.addAttribute("question", qnAService.findById(id));
-        return "/qna/show";
-    }
-
-    @GetMapping("/form")
-    public String form() {
-        return "/qna/form";
-    }
-
-    @PostMapping("/")
+    @PostMapping()
     public String create(
             @LoginUser User loginUser,
             @RequestParam("title") String title,
@@ -44,7 +33,18 @@ public class QnAController {
         return "/qna/show";
     }
 
-    @GetMapping("/{id}/form")
+    @GetMapping(value = "/{id}")
+    public String show(@PathVariable long id, Model model) {
+        model.addAttribute("question", qnAService.findById(id));
+        return "/qna/show";
+    }
+
+    @GetMapping(value = "/form")
+    public String form(@LoginUser User loginUser) {
+        return "/qna/form";
+    }
+
+    @GetMapping(value = "/{id}/form")
     public String update(
             @PathVariable long id,
             @LoginUser User loginUser,
@@ -54,7 +54,7 @@ public class QnAController {
         return "/qna/updateForm";
     }
 
-    @PostMapping("/{id}/update")
+    @PostMapping(value = "/{id}/update")
     public String update(
             @LoginUser User loginUser,
             @PathVariable long id,
@@ -62,11 +62,11 @@ public class QnAController {
             @RequestParam("contents") String contents,
             Model model) {
         model.addAttribute("question",
-                qnAService.update(loginUser, id, new Question(title, contents)));
+                qnAService.update(loginUser, id, new QuestionDto(title, contents)));
         return "/qna/show";
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping(value = "/{id}")
     public String delete(
             @LoginUser User loginUser,
             @PathVariable long id,

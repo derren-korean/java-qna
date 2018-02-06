@@ -4,4 +4,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AnswerRepository extends JpaRepository<Answer, Long> {
     Iterable<Answer> findByDeleted(boolean deleted);
+
+    @Override
+    Answer save(Answer answer);
 }

@@ -20,6 +20,7 @@ import static java.lang.String.format;
 @Service("qnaService")
 public class QnAService {
     private static final Logger log = LoggerFactory.getLogger(QnAService.class);
+    private static final String NO_EXISTS = "존재하지 않는 %s입니다.";
     private static final String DIFFERENT_OWNER = "자신이 작성한 %s에 대해서만 수정/삭제가 가능합니다.";
     private static final String ALREADY_DELETED = "이미 삭제된 %s입니다.";
 
@@ -41,11 +42,11 @@ public class QnAService {
     }
 
     public Question findById(long id) {
-        return Optional.ofNullable(questionRepository.findOne(id)).orElseThrow(()->new IllegalArgumentException("존재하지 않는 질문입니다."));
+        return Optional.ofNullable(questionRepository.findOne(id)).orElseThrow(()->new IllegalArgumentException(String.format(NO_EXISTS,"질문")));
     }
 
     public Answer findByAnswerId(long id) {
-        return Optional.ofNullable(answerRepository.findOne(id)).orElseThrow(() -> new IllegalArgumentException("존재하지 않는 답변입니다."));
+        return Optional.ofNullable(answerRepository.findOne(id)).orElseThrow(() -> new IllegalArgumentException(String.format(NO_EXISTS,"답변")));
     }
 
     public Iterable<Question> findAll() {
@@ -57,8 +58,8 @@ public class QnAService {
     }
 
     @Transactional
-    public Question update(User loginUser, long id, Question updatedQuestion) {
-        return findById(id).update(loginUser, updatedQuestion);
+    public Question update(User loginUser, long id, QuestionDto questionDto) {
+        return findById(id).update(loginUser, new Question(loginUser, questionDto));
     }
 
     @Transactional
@@ -72,7 +73,7 @@ public class QnAService {
         if (isDeleted(original)) throw new CannotDeleteException(format(ALREADY_DELETED, "질문"));
 
         original.delete(loginUser);
-        Question updatedQuestion = update(loginUser, questionId, original);
+        Question updatedQuestion = update(loginUser, questionId, original.toQuestionDto());
         deleteHistoryService.save(new DeleteHistory(ContentType.QUESTION, updatedQuestion.getId(), loginUser, LocalDateTime.now()));
     }
 

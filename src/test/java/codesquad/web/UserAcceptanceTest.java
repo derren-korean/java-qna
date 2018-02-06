@@ -85,9 +85,7 @@ public class UserAcceptanceTest extends AcceptanceTest {
     }
 
     private ResponseEntity<String> update(TestRestTemplate template) throws Exception {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Arrays.asList(MediaType.TEXT_HTML));
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpHeaders headers = HtmlFormDataBuilder.defaultHeaders();
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
         params.add("_method", "put");
