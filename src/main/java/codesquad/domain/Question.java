@@ -10,6 +10,8 @@ import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 public class  Question extends AbstractEntity implements UrlGeneratable {
@@ -40,7 +42,14 @@ public class  Question extends AbstractEntity implements UrlGeneratable {
         this.contents = contents;
     }
 
-    public String getTitle() {
+    public Question(User loginUser, QuestionDto questionDto) {
+        if (loginUser == null) throw new IllegalArgumentException();
+        this.title = questionDto.getTitle();
+        this.contents = questionDto.getContents();
+        this.writeBy(loginUser);
+    }
+
+        public String getTitle() {
         return title;
     }
 
@@ -62,6 +71,7 @@ public class  Question extends AbstractEntity implements UrlGeneratable {
     }
 
     public boolean isOwner(User loginUser) {
+        if (writer == null || loginUser == null) return false;
         return writer.equals(loginUser);
     }
 
@@ -69,17 +79,20 @@ public class  Question extends AbstractEntity implements UrlGeneratable {
         return deleted;
     }
 
-    public void update(User loginUser, Question updatedQuestion) {
+    public Question update(User loginUser, Question updatedQuestion) {
         if (!isOwner(loginUser)) {
             throw new UnAuthorizedException("자신이 작성한 질문에 대해서만 수정/삭제가 가능합니다.");
         }
 
         this.title = updatedQuestion.title;
         this.contents = updatedQuestion.contents;
-        this.deleted = updatedQuestion.deleted;
+        return this;
     }
 
-    public void delete() {
+    public void delete(User loginUser) {
+        if (!isOwner(loginUser)) {
+            throw new UnAuthorizedException("자신이 작성한 질문에 대해서만 수정/삭제가 가능합니다.");
+        }
         deleted = true;
     }
 
@@ -95,5 +108,24 @@ public class  Question extends AbstractEntity implements UrlGeneratable {
     @Override
     public String toString() {
         return "Question [id=" + getId() + ", title=" + title + ", contents=" + contents + ", writer=" + writer + "]";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Question question = (Question) o;
+        return deleted == question.deleted &&
+                Objects.equals(writer, question.writer) &&
+                Objects.equals(title, question.title) &&
+                Objects.equals(contents, question.contents) &&
+                Objects.equals(answers, question.answers);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(super.hashCode(), title, contents, writer, answers, deleted);
     }
 }

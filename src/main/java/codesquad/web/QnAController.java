@@ -4,32 +4,27 @@ import codesquad.CannotDeleteException;
 import codesquad.UnAuthorizedException;
 import codesquad.domain.Question;
 import codesquad.domain.User;
-import codesquad.security.HttpSessionUtils;
+import codesquad.dto.QuestionDto;
 import codesquad.security.LoginUser;
-import codesquad.service.QnADeleteService;
-import codesquad.service.QuestionService;
+import codesquad.service.QnAService;
 import com.google.common.collect.Iterables;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpSession;
 import java.util.Arrays;
 
 @Controller
 @RequestMapping("/questions")
-public class QuestionController {
+public class QnAController {
 
-    @Resource(name = "questionService")
-    private QuestionService questionService;
-
-    @Resource(name = "qnaDeleteService")
-    private QnADeleteService qnADeleteService;
+    @Resource(name = "qnaService")
+    private QnAService qnAService;
 
     @GetMapping("/{id}")
     public String show(@PathVariable long id, Model model) {
-        model.addAttribute("question", questionService.findById(id));
+        model.addAttribute("question", qnAService.findById(id));
         return "/qna/show";
     }
 
@@ -45,18 +40,17 @@ public class QuestionController {
             @RequestParam("contents") String contents,
             Model model) {
         model.addAttribute("question",
-                questionService.create(loginUser, new Question(title, contents)));
+                qnAService.create(loginUser, new QuestionDto(title, contents)));
         return "/qna/show";
     }
 
     @GetMapping("/{id}/form")
     public String update(
             @PathVariable long id,
-            HttpSession session,
+            @LoginUser User loginUser,
             Model model) {
-        User loginUser = HttpSessionUtils.getUserFromSession(session);
-        if (!questionService.findById(id).isOwner(loginUser)) throw new UnAuthorizedException();
-        model.addAttribute("question", questionService.findById(id));
+        if (!qnAService.findById(id).isOwner(loginUser)) throw new UnAuthorizedException();
+        model.addAttribute("question", qnAService.findById(id));
         return "/qna/updateForm";
     }
 
@@ -68,7 +62,7 @@ public class QuestionController {
             @RequestParam("contents") String contents,
             Model model) {
         model.addAttribute("question",
-                questionService.update(loginUser, id, new Question(title, contents)));
+                qnAService.update(loginUser, id, new Question(title, contents)));
         return "/qna/show";
     }
 
@@ -77,8 +71,8 @@ public class QuestionController {
             @LoginUser User loginUser,
             @PathVariable long id,
             Model model) throws CannotDeleteException {
-        qnADeleteService.deleteQuestion(loginUser, id);
-        model.addAttribute("questions", Arrays.asList(Iterables.toArray(questionService.findAll(), Question.class)));
+        qnAService.deleteQuestion(loginUser, id);
+        model.addAttribute("questions", Arrays.asList(Iterables.toArray(qnAService.findAll(), Question.class)));
         return "home";
     }
 }

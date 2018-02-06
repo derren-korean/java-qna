@@ -28,6 +28,7 @@ public class Answer extends AbstractEntity implements UrlGeneratable {
     }
 
     public Answer(User writer, Question question, String contents) {
+        if (writer == null) throw new IllegalArgumentException();
         this.writer = writer;
         this.question = question;
         this.contents = contents;
@@ -69,13 +70,13 @@ public class Answer extends AbstractEntity implements UrlGeneratable {
         this.deleted = true;
     }
 
-    public void update(User loginUser, Answer updatedAnswer) {
-        if (!isOwner(loginUser) || !updatedAnswer.isOwner(writer)) {
+    public Answer update(User loginUser, Answer updatedAnswer) {
+        if (!updatedAnswer.isOwner(loginUser)) {
             throw new UnAuthorizedException("자신이 작성한 질문에 대해서만 수정/삭제가 가능합니다.");
         }
 
         this.contents = updatedAnswer.contents;
-        this.deleted = updatedAnswer.deleted;
+        return this;
     }
 
     @Override

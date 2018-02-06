@@ -1,7 +1,7 @@
 package codesquad.web;
 
 import codesquad.domain.Question;
-import codesquad.service.QuestionService;
+import codesquad.service.QnAService;
 import com.google.common.collect.Iterables;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,12 +13,12 @@ import java.util.Arrays;
 @Controller
 public class HomeController {
 
-    @Resource(name = "questionService")
-    private QuestionService questionService;
+    @Resource(name = "qnaService")
+    private QnAService qnaService;
 
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("questions", Arrays.asList(Iterables.toArray(questionService.findAll(), Question.class)));
+        model.addAttribute("questions", Arrays.asList(Iterables.toArray(qnaService.findAll(), Question.class)));
         return "home";
     }
 }

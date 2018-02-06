@@ -7,9 +7,8 @@ import codesquad.domain.Answer;
 import codesquad.domain.Question;
 import codesquad.domain.User;
 import codesquad.domain.UserRepository;
-import codesquad.service.AnswerService;
-import codesquad.service.QnADeleteService;
-import codesquad.service.QuestionService;
+import codesquad.dto.QuestionDto;
+import codesquad.service.QnAService;
 import codesquad.service.UserService;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,13 +38,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
     UserService userService;
 
     @Autowired
-    QuestionService questionService;
-
-    @Autowired
-    AnswerService answerService;
-
-    @Autowired
-    QnADeleteService qnADeleteService;
+    QnAService qnAService;
 
     private User sanjigi;
 
@@ -57,7 +50,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
     //모든 사용자는 질문을 볼 수 있다.
     @Test
     public void anybody_can_access_to_question() {
-        assertThat(Optional.of(questionService.findAll()).isPresent(), is(true));
+        assertThat(Optional.of(qnAService.findAll()).isPresent(), is(true));
     }
 
     @Test
@@ -71,7 +64,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
     @Test
     public void acceptance_show_question() {
         long javajigiQuestion = defaultUser().getId();
-        Question question = questionService.findById(javajigiQuestion);
+        Question question = qnAService.findById(javajigiQuestion);
         ResponseEntity<String> response = template().getForEntity(String.format("/questions/%d", question.getId()), String.class);
         assertThat(response.getStatusCode(), is(HttpStatus.OK));
         assertThat(response.getBody().contains(question.getTitle()), is(true));
@@ -87,8 +80,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
     @Test (expected = InvalidDataAccessApiUsageException.class)
     public void nobody_can_ask_a_question_without_login() {
         User question_without_login = new User("javajigi", "test", "name", "javajigi@slipp.net");
-        Question question = new Question("first", "test");
-        questionService.create(question_without_login, question);
+        qnAService.create(question_without_login, new QuestionDto("first", "test"));
     }
 
     @Test
@@ -105,9 +97,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
 
     @Test
     public void create_question_success() {
-        Question question = new Question("first", "test");
-
-        Question createdQuestion = questionService.create(sanjigi, question);
+        Question createdQuestion = qnAService.create(sanjigi, new QuestionDto("first", "test"));
         assertThat(createdQuestion.isOwner(sanjigi), is(true));
     }
 
@@ -151,26 +141,24 @@ public class QnAcceptanceTest extends AcceptanceTest {
     @Test(expected = IllegalArgumentException.class)
     public void update_question_fail_nonExists_question() {
         Question noExistsQuestion = new Question("noExists", "cuz never created");
-        questionService.update(sanjigi, noExistsQuestion.getId(), noExistsQuestion);
+        qnAService.update(sanjigi, noExistsQuestion.getId(), noExistsQuestion);
     }
 
     @Test(expected = UnAuthorizedException.class)
     public void update_question_fail_different_user() throws UnAuthorizedException, UnAuthenticationException {
-        Question question = new Question("test", "updatedTest");
-        Question createdQuestion = questionService.create(sanjigi, question);
+        Question createdQuestion = qnAService.create(sanjigi, new QuestionDto("test", "updatedTest"));
 
         User differentUser = userService.login("javajigi", "test");
-        questionService.update(differentUser, createdQuestion.getId(), createdQuestion);
+        qnAService.update(differentUser, createdQuestion.getId(), createdQuestion);
     }
 
     @Test
     public void update_question_success_changed_same_writer() {
         String updateContent = "update text";
-        Question question = new Question("first", "test");
-        Question createdQuestion = questionService.create(sanjigi, question);
+        Question createdQuestion = qnAService.create(sanjigi, new QuestionDto("first","test"));
 
         Question changedContent = new Question("first", updateContent);
-        Question updatedQuestion = questionService.update(sanjigi, createdQuestion.getId(), changedContent);
+        Question updatedQuestion = qnAService.update(sanjigi, createdQuestion.getId(), changedContent);
 
         assertThat(createdQuestion.getId(), is(updatedQuestion.getId()));
         assertThat(createdQuestion.isOwner(sanjigi), is(updatedQuestion.isOwner(sanjigi)));
@@ -180,7 +168,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
     public void acceptance_update_question() {
         long sanjigiQuestion = sanjigi.getId();
         String updateContent = "update";
-        Question question = questionService.findById(sanjigiQuestion);
+        Question question = qnAService.findById(sanjigiQuestion);
         HttpEntity<MultiValueMap<String, Object>> request = HtmlFormDataBuilder.urlEncodedForm()
                 .addParameter("title", question.getTitle())
                 .addParameter("contents", updateContent)
@@ -200,24 +188,24 @@ public class QnAcceptanceTest extends AcceptanceTest {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
-        qnADeleteService.deleteQuestion(sanjigi, javajigiQuestion);
+        qnAService.deleteQuestion(sanjigi, javajigiQuestion);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void delete_question_non_exists_question() throws IllegalArgumentException, CannotDeleteException {
         long noExistsQuestionId = 0l;
-        qnADeleteService.deleteQuestion(sanjigi, noExistsQuestionId);
+        qnAService.deleteQuestion(sanjigi, noExistsQuestionId);
     }
 
     @Test
     public void delete_question_success() throws CannotDeleteException {
         long questionId = sanjigi.getId();
-        Question question = questionService.findById(questionId);
-        assertThat(questionService.findById(questionId).isDeleted(), is(false));
-        qnADeleteService.deleteQuestion(sanjigi, question.getId());
+        Question question = qnAService.findById(questionId);
+        assertThat(qnAService.findById(questionId).isDeleted(), is(false));
+        qnAService.deleteQuestion(sanjigi, question.getId());
 
-        assertThat(questionService.findById(questionId).isDeleted(), is(true));
-        for (Question q : questionService.findAll()) {
+        assertThat(qnAService.findById(questionId).isDeleted(), is(true));
+        for (Question q : qnAService.findAll()) {
             assertThat(q.getId() == questionId, is(false));
         }
     }
@@ -236,19 +224,18 @@ public class QnAcceptanceTest extends AcceptanceTest {
 
     @Test (expected = CannotDeleteException.class)
     public void delete_question_already_deleted() throws CannotDeleteException {
-        Question question = new Question("test", "updatedTest");
-        Question createdQuestion = questionService.create(sanjigi, question);
+        Question createdQuestion = qnAService.create(sanjigi, new QuestionDto("test", "updatedTest"));
         long questionId = createdQuestion.getId();
 
-        assertThat(questionService.findById(questionId).isDeleted(), is(false));
-        qnADeleteService.deleteQuestion(sanjigi, question.getId());
-        qnADeleteService.deleteQuestion(sanjigi, question.getId());
+        assertThat(qnAService.findById(questionId).isDeleted(), is(false));
+        qnAService.deleteQuestion(sanjigi, questionId);
+        qnAService.deleteQuestion(sanjigi, questionId);
     }
 
     @Test (expected = IllegalArgumentException.class)
     public void add_answer_fail_no_question_in_db() throws CannotDeleteException {
         Question question = new Question("123", "123");
-        qnADeleteService.addAnswer(sanjigi, question.getId(),"최소다섯글자");
+        qnAService.addAnswer(sanjigi, question.getId(),"최소다섯글자");
     }
 
     @Test (expected = UnAuthorizedException.class)
@@ -256,10 +243,10 @@ public class QnAcceptanceTest extends AcceptanceTest {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
-        Answer sanjigiAnswer = qnADeleteService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
+        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
 
         User javajigi = userService.login(defaultUser().getUserId(), defaultUser().getPassword());
-        qnADeleteService.deleteAnswer(javajigi, sanjigiAnswer.getId());
+        qnAService.deleteAnswer(javajigi, sanjigiAnswer.getId());
     }
 
     @Test (expected = CannotDeleteException.class)
@@ -267,9 +254,9 @@ public class QnAcceptanceTest extends AcceptanceTest {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
-        Answer sanjigiAnswer = qnADeleteService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
-        qnADeleteService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
-        qnADeleteService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
+        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
+        qnAService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
+        qnAService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
     }
 
     @Test
@@ -277,7 +264,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
-        Answer sanjigiAnswer = qnADeleteService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
-        qnADeleteService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
+        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
+        qnAService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
     }
 }

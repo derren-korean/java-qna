@@ -1,11 +1,12 @@
 package codesquad.domain;
 
 import codesquad.UnAuthorizedException;
+import codesquad.dto.QuestionDto;
 import org.junit.Before;
 import org.junit.Test;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.IsNot.not;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
@@ -21,37 +22,33 @@ public class QuestionTest {
         question = new Question("title", "contents");
     }
 
-    @Test
-    public void writeBy_for_create() {
-        assertNull(question.getWriter());
+    @Test (expected = IllegalArgumentException.class)
+    public void nothing_created_without_user() {
+        new Question(null, new QuestionDto("test","testest"));
+    }
 
-        question.writeBy(JAVAJIGI);
-        assertThat(question.isOwner(JAVAJIGI), is(true));
-        assertThat(question.isOwner(SANJIGI), is(false));
+    @Test
+    public void create_by_user() {
+        new Question(JAVAJIGI, new QuestionDto("test", "testest"));
     }
 
     @Test (expected = UnAuthorizedException.class)
     public void updated_by_not_owner() {
+        question.update(null, question);
+    }
+
+    @Test (expected = UnAuthorizedException.class)
+    public void updated_by_different_owner() {
         question.writeBy(JAVAJIGI);
         question.update(SANJIGI, question);
     }
 
     @Test
     public void updated_by_owner() {
-
-        String originalTitle = "title";
-        String originalContents = "contents";
         question.writeBy(JAVAJIGI);
+        Question updatedQuestion = new Question("updated title", "updated contents");
+        updatedQuestion = question.update(JAVAJIGI, updatedQuestion);
 
-        String updateTitle = "updated title";
-        String updateContents = "updated contents";
-        Question updatedQuestion = new Question(updateTitle, updateContents);
-        question.update(JAVAJIGI, updatedQuestion);
-
-        assertThat(question.getTitle(), is(updateTitle));
-        assertThat(question.getTitle(), not(originalTitle));
-
-        assertThat(question.getContents(), is(updateContents));
-        assertThat(question.getContents(), not(originalContents));
+        assertTrue(question.equals(updatedQuestion));
     }
 }
