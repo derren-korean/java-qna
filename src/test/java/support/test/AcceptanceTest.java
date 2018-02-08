@@ -10,18 +10,22 @@ import org.springframework.test.context.junit4.SpringRunner;
 import codesquad.domain.User;
 import codesquad.domain.UserRepository;
 
+import java.util.Optional;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 public abstract class AcceptanceTest {
+    private static final String API_PATH = "/api/";
     private static final String DEFAULT_LOGIN_USER = "javajigi";
     private static final String DIFFERENT_LOGIN_USER = "sanjigi";
+
 
     @Autowired
     private TestRestTemplate template;
     
     @Autowired
     private UserRepository userRepository;
-    
+
     public TestRestTemplate template() {
         return template;
     } 
@@ -38,12 +42,17 @@ public abstract class AcceptanceTest {
         return findByUserId(DEFAULT_LOGIN_USER);
     }
 
-    protected User diffrentUser() {
+    protected User differentUser() {
         return findByUserId(DIFFERENT_LOGIN_USER);
     }
 
     
     protected User findByUserId(String userId) {
         return userRepository.findByUserId(userId).get();
+    }
+
+    protected <T> String getApiPath(Class<T> clazz) {
+        if (clazz == null) return "";
+        return clazz instanceof Class ? API_PATH + clazz.getSimpleName().toLowerCase()+"s" : "";
     }
 }

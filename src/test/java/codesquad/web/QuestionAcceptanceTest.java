@@ -21,16 +21,6 @@ public class QuestionAcceptanceTest extends AcceptanceTest {
     private QuestionRepository questionRepository;
 
     @Test
-    public void 누구든지_질문을_읽을_수_있다() {
-        Question question = questionRepository.findOne(defaultUser().getId());
-        ResponseEntity<String> response = template()
-                .getForEntity(format("/questions/%d", question.getId()), String.class);
-
-        assertThat(response.getStatusCode(), is(HttpStatus.OK));
-        assertThat(response.getBody().contains(question.getTitle()), is(true));
-    }
-
-    @Test
     public void 실패_로그인_없이_질문_작성() {
         ResponseEntity<String> response = template()
                 .getForEntity("/questions/form", String.class);
@@ -55,7 +45,6 @@ public class QuestionAcceptanceTest extends AcceptanceTest {
                 .postForEntity("/questions/", request, String.class);
 
         assertThat(response.getStatusCode(), is(HttpStatus.OK));
-        assertNotNull(question.getId());
         assertThat(response.getBody().contains(question.getContents()), is(true));
     }
 
@@ -71,7 +60,7 @@ public class QuestionAcceptanceTest extends AcceptanceTest {
     @Test
     public void 실패_다른_사용자_질문_수정_접근() {
         Question question = questionRepository.findOne(defaultUser().getId());
-        ResponseEntity<String> response = basicAuthTemplate(diffrentUser())
+        ResponseEntity<String> response = basicAuthTemplate(differentUser())
                 .getForEntity(format("/questions/%d/form", question.getId()), String.class);
 
         assertThat(response.getStatusCode(), is(HttpStatus.FORBIDDEN));

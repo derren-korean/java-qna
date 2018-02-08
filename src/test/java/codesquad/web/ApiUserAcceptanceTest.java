@@ -16,18 +16,18 @@ public class ApiUserAcceptanceTest extends AcceptanceTest {
     @Test
     public void create() throws Exception {
         UserDto newUser = createUserDto("testuser1");
-        ResponseEntity<String> response = template().postForEntity("/api/users", newUser, String.class);
+        ResponseEntity<String> response = template().postForEntity(getApiPath(User.class), newUser, String.class);
         assertThat(response.getStatusCode(), is(HttpStatus.CREATED));
         String location = response.getHeaders().getLocation().getPath();  
         
         UserDto dbUser = basicAuthTemplate(findByUserId(newUser.getUserId())).getForObject(location, UserDto.class);
         assertThat(dbUser, is(newUser));
     }
-    
+
     @Test
     public void show_다른_사람() throws Exception {
         UserDto newUser = createUserDto("testuser2");
-        ResponseEntity<String> response = template().postForEntity("/api/users", newUser, String.class);
+        ResponseEntity<String> response = template().postForEntity(getApiPath(User.class), newUser, String.class);
         assertThat(response.getStatusCode(), is(HttpStatus.CREATED));
         String location = response.getHeaders().getLocation().getPath();  
         
@@ -42,7 +42,7 @@ public class ApiUserAcceptanceTest extends AcceptanceTest {
     @Test
     public void update() throws Exception {
         UserDto newUser = createUserDto("testuser3");
-        ResponseEntity<String> response = template().postForEntity("/api/users", newUser, String.class);
+        ResponseEntity<String> response = template().postForEntity(getApiPath(User.class), newUser, String.class);
         assertThat(response.getStatusCode(), is(HttpStatus.CREATED));
         String location = response.getHeaders().getLocation().getPath();  
         
@@ -57,7 +57,7 @@ public class ApiUserAcceptanceTest extends AcceptanceTest {
     @Test
     public void update_다른_사람() throws Exception {
         UserDto newUser = createUserDto("testuser4");
-        ResponseEntity<String> response = template().postForEntity("/api/users", newUser, String.class);
+        ResponseEntity<String> response = template().postForEntity(getApiPath(User.class), newUser, String.class);
         assertThat(response.getStatusCode(), is(HttpStatus.CREATED));
         String location = response.getHeaders().getLocation().getPath(); 
         

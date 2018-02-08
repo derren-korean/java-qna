@@ -16,20 +16,19 @@ import javax.annotation.Resource;
 import java.util.Arrays;
 
 @Controller
-@RequestMapping("/questions")
+@RequestMapping(value = "/questions")
 public class QnAController {
 
     @Resource(name = "qnaService")
     private QnAService qnAService;
 
-    @PostMapping()
+    @PostMapping("")
     public String create(
             @LoginUser User loginUser,
-            @RequestParam("title") String title,
-            @RequestParam("contents") String contents,
+            QuestionDto questionDto,
             Model model) {
         model.addAttribute("question",
-                qnAService.create(loginUser, new QuestionDto(title, contents)));
+                qnAService.create(loginUser, questionDto));
         return "/qna/show";
     }
 
@@ -58,11 +57,10 @@ public class QnAController {
     public String update(
             @LoginUser User loginUser,
             @PathVariable long id,
-            @RequestParam("title") String title,
-            @RequestParam("contents") String contents,
+            QuestionDto questionDto,
             Model model) {
         model.addAttribute("question",
-                qnAService.update(loginUser, id, new QuestionDto(title, contents)));
+                qnAService.update(loginUser, id, questionDto));
         return "/qna/show";
     }
 

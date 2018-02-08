@@ -10,6 +10,7 @@ import codesquad.domain.UserRepository;
 import codesquad.dto.QuestionDto;
 import codesquad.service.QnAService;
 import codesquad.service.UserService;
+import org.assertj.core.util.Lists;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +18,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import support.test.AcceptanceTest;
+
+import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -71,14 +75,28 @@ public class QnAcceptanceTest extends AcceptanceTest {
 
     @Test
     public void acceptance_delete_question() {
-        long javajigiQuestion = defaultUser().getId();
+        String createContents = "willBeDeleted";
+        HttpEntity<MultiValueMap<String, Object>> request = HtmlFormDataBuilder.urlEncodedForm()
+                .addParameter("title", "title")
+                .addParameter("contents", createContents)
+                .build();
 
-        String url = String.format("/questions/%d", javajigiQuestion);
+        ResponseEntity<String> response = basicAuthTemplate()
+                .postForEntity("/questions/", request, String.class);
+        assertThat(response.getBody().contains(createContents), is(true));
+
+        Question createdQuestion = Lists.newArrayList(qnAService.findAll()).stream()
+                .filter(question -> createContents.equals(question.getContents()))
+                .findFirst()
+                .get();
+
+        String url = String.format("/questions/%d", createdQuestion.getId());
         HttpEntity entity = new HttpEntity(HtmlFormDataBuilder.defaultHeaders());
-        ResponseEntity<String> response = basicAuthTemplate(defaultUser())
+        response = basicAuthTemplate(defaultUser())
                 .exchange(url,HttpMethod.DELETE,entity,String.class);
+
         assertThat(response.getStatusCode(), is(HttpStatus.OK));
-        assertThat(response.getBody().contains(defaultUser().getName()), is(false));
+        assertThat(response.getBody().contains(createdQuestion.getContents()), is(false));
     }
 
     @Test (expected = CannotDeleteException.class)
