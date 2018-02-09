@@ -16,7 +16,7 @@ import java.net.URI;
 
 @RestController
 @RequestMapping(value = "/api/questions", produces = "application/json")
-public class ApiQnAController {
+public class ApiQuestionController {
     @Resource(name = "qnaService")
     private QnAService qnAService;
 

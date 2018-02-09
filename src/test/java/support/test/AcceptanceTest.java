@@ -1,16 +1,18 @@
 package support.test;
 
+import codesquad.domain.User;
+import codesquad.domain.UserRepository;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import codesquad.domain.User;
-import codesquad.domain.UserRepository;
-
-import java.util.Optional;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
@@ -49,6 +51,17 @@ public abstract class AcceptanceTest {
     
     protected User findByUserId(String userId) {
         return userRepository.findByUserId(userId).get();
+    }
+
+    protected <T> ResponseEntity<String> createResource(User loginUser, Object payload, Class<T> clazz) {
+        TestRestTemplate testRestTemplate = loginUser == null ? template() : basicAuthTemplate(loginUser);
+        ResponseEntity<String> response = testRestTemplate.postForEntity(getApiPath(clazz), payload, String.class);
+        assertThat(response.getStatusCode(), is(HttpStatus.CREATED));
+        return response;
+    }
+
+    protected <T> T getResource(User loginUser, String location, Class<T> responseType) {
+        return basicAuthTemplate(loginUser).getForObject(location, responseType);
     }
 
     protected <T> String getApiPath(Class<T> clazz) {

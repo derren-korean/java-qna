@@ -17,7 +17,7 @@ import java.util.Arrays;
 
 @Controller
 @RequestMapping(value = "/questions")
-public class QnAController {
+public class QuestionController {
 
     @Resource(name = "qnaService")
     private QnAService qnAService;

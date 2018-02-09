@@ -7,6 +7,7 @@ import codesquad.domain.Answer;
 import codesquad.domain.Question;
 import codesquad.domain.User;
 import codesquad.domain.UserRepository;
+import codesquad.dto.AnswerDto;
 import codesquad.dto.QuestionDto;
 import codesquad.service.QnAService;
 import codesquad.service.UserService;
@@ -20,8 +21,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import support.test.AcceptanceTest;
-
-import java.util.stream.Stream;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -47,7 +46,7 @@ public class QnAcceptanceTest extends AcceptanceTest {
 
     // step4
     @Test (expected = UnAuthorizedException.class)
-    public void delete_question_wrong_user() throws CannotDeleteException {
+    public void delete_question_wrong_user() {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
@@ -61,13 +60,12 @@ public class QnAcceptanceTest extends AcceptanceTest {
     }
 
     @Test
-    public void delete_question_success() throws CannotDeleteException {
+    public void delete_question_success() {
         long questionId = sanjigi.getId();
         Question question = qnAService.findById(questionId);
         assertThat(qnAService.findById(questionId).isDeleted(), is(false));
         qnAService.deleteQuestion(sanjigi, question.getId());
 
-        assertThat(qnAService.findById(questionId).isDeleted(), is(true));
         for (Question q : qnAService.findAll()) {
             assertThat(q.getId() == questionId, is(false));
         }
@@ -99,8 +97,8 @@ public class QnAcceptanceTest extends AcceptanceTest {
         assertThat(response.getBody().contains(createdQuestion.getContents()), is(false));
     }
 
-    @Test (expected = CannotDeleteException.class)
-    public void delete_question_already_deleted() throws CannotDeleteException {
+    @Test (expected = IllegalArgumentException.class)
+    public void delete_question_already_deleted() {
         Question createdQuestion = qnAService.create(sanjigi, new QuestionDto("test", "updatedTest"));
         long questionId = createdQuestion.getId();
 
@@ -109,39 +107,33 @@ public class QnAcceptanceTest extends AcceptanceTest {
         qnAService.deleteQuestion(sanjigi, questionId);
     }
 
-    @Test (expected = IllegalArgumentException.class)
-    public void add_answer_fail_no_question_in_db() throws CannotDeleteException {
-        Question question = new Question("123", "123");
-        qnAService.addAnswer(sanjigi, question.getId(),"최소다섯글자");
-    }
-
     @Test (expected = UnAuthorizedException.class)
-    public void delete_answer_fail_wrong_writer() throws CannotDeleteException, UnAuthenticationException {
+    public void delete_answer_fail_wrong_writer() throws UnAuthenticationException {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
-        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
+        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, new AnswerDto("답변을 남긴다.", javajigiQuestion));
 
         User javajigi = userService.login(defaultUser().getUserId(), defaultUser().getPassword());
         qnAService.deleteAnswer(javajigi, sanjigiAnswer.getId());
     }
 
-    @Test (expected = CannotDeleteException.class)
-    public void delete_answer_already_deleted() throws CannotDeleteException {
+    @Test (expected = IllegalArgumentException.class)
+    public void delete_answer_already_deleted() {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
-        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
+        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, new AnswerDto("답변을 남긴다.", javajigiQuestion));
         qnAService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
         qnAService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
     }
 
     @Test
-    public void delete_answer_success_right_writer_but_different_owner_question() throws CannotDeleteException {
+    public void delete_answer_success_right_writer_but_different_owner_question() {
         long javajigiQuestion = defaultUser().getId();
         User sanjigi = this.sanjigi;
 
-        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, javajigiQuestion, "답변을 남긴다.");
+        Answer sanjigiAnswer = qnAService.addAnswer(sanjigi, new AnswerDto("답변을 남긴다.", javajigiQuestion));
         qnAService.deleteAnswer(sanjigi, sanjigiAnswer.getId());
     }
 }

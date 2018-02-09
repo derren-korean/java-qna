@@ -12,7 +12,6 @@ import support.test.AcceptanceTest;
 
 import static java.lang.String.format;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 public class QuestionAcceptanceTest extends AcceptanceTest {
